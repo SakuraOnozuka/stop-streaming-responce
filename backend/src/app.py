@@ -9,11 +9,29 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 import subprocess
 import time
+import base64
 
 from time_keeper import TimeKeeperThread, TimeKeeperProcess
+from starlette.middleware.cors import CORSMiddleware # 追加
 
 app = FastAPI()
 video_capture = cv2.VideoCapture(0)
+
+# CORSを回避するために追加
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+]
 
 save_dir = Path(__file__).parent.parent.joinpath("images").resolve()
 save_dir.mkdir(exist_ok=True)
@@ -85,18 +103,32 @@ def shot():
     return {"image_path": image_path}
 
 
-def generate() -> bytes:
+# def generate() -> bytes:
+#     while True:
+#         _, frame = video_capture.read()
+#         flag, encodedImage = cv2.imencode(".jpg", frame)
+#         yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n'
+#         print("#", end="", flush=True)
+#         time.sleep(1)
+#
+#
+# @app.post("/video_feed")
+# def video_feed():
+#     print("jj")
+#     return StreamingResponse(content=generate(), media_type="multipart/x-mixed-replace;boundary=frame")
+
+def generate():
     while True:
+        # time.sleep(1)
+        print("#", end="", flush=True)
         _, frame = video_capture.read()
         flag, encodedImage = cv2.imencode(".jpg", frame)
-        yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n'
-        print("#", end="")
-
+        yield b'--frame' + base64.b64encode(encodedImage)
 
 @app.get("/video_feed")
 def video_feed():
-    print("jj")
     return StreamingResponse(content=generate(), media_type="multipart/x-mixed-replace;boundary=frame")
+
 
 
 @app.get("/ws_test")
