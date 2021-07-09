@@ -38,7 +38,6 @@ export default class Home extends Vue {
   }
 
   mounted() {
-    console.log(1)
     const req = http.request("http://localhost:9001/video_feed", res => {
       let cache = new Buffer(0);
       res.on("data", part => {
