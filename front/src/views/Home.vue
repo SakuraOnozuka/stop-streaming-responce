@@ -12,7 +12,6 @@ import http from "http";
 @Component({
 })
 export default class Home extends Vue {
-  req = function (){}
   img = ''
   src = ''
   stop = false
