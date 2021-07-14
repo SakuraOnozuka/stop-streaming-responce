@@ -110,12 +110,16 @@ def shot():
 #         yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n'
 #         print("#", end="", flush=True)
 #         time.sleep(1)
-#
-#
-# @app.post("/video_feed")
-# def video_feed():
-#     print("jj")
-#     return StreamingResponse(content=generate(), media_type="multipart/x-mixed-replace;boundary=frame")
+
+# class NewStreamingResponse(StreamingResponse):
+#     def __del__(self):
+#         print("deleted")
+
+
+@app.get("/video_feed")
+def video_feed():
+    print("jj")
+    return NewStreamingResponse(content=generate(), media_type="multipart/x-mixed-replace;boundary=frame")
 
 def generate():
     while True:
@@ -124,6 +128,11 @@ def generate():
         _, frame = video_capture.read()
         flag, encodedImage = cv2.imencode(".jpg", frame)
         yield b'--frame' + base64.b64encode(encodedImage)
+
+class NewStreamingResponse(StreamingResponse):
+    def __del__(self):
+        print("deleted")
+
 
 @app.get("/video_feed")
 def video_feed():
